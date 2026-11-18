@@ -1,0 +1,31 @@
+{
+  "name": "emprest-ai-frontend",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=20.11.1"
+  },
+  "workspaces": [
+    "backend"
+  ],
+  "scripts": {
+    "dev": "vite",
+    "build": "npm run prisma:generate --workspace=@emprest-ai/backend && npm run build --workspace=@emprest-ai/backend && npm run typecheck:api && npm run build:frontend",
+    "build:frontend": "tsc --noEmit && vite build",
+    "typecheck:api": "tsc --noEmit -p tsconfig.api.json",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.45.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.12",
+    "@types/react-dom": "^18.3.1",
+    "@vitejs/plugin-react": "^4.3.4",
+    "typescript": "^5.7.3",
+    "vite": "^6.0.5"
+  }
+}

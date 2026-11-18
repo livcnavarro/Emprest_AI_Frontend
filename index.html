@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>EMPREST.AI — Catálogo</title>
+  <title>EMPREST.AI</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -273,6 +273,18 @@
       text-align: center;
       color: color-mix(in srgb, var(--color-text) 55%, transparent);
     }
+    .empty-state {
+      padding: 48px;
+      border: 1px dashed var(--color-divider);
+      border-radius: var(--radius-lg);
+      color: color-mix(in srgb, var(--color-text) 55%, transparent);
+      text-align: center;
+    }
+    .prototype-note {
+      margin: 0 0 16px;
+      color: color-mix(in srgb, var(--color-text) 45%, transparent);
+      font-size: 12px;
+    }
     .hidden { display: none !important; }
 
     @keyframes fadeUp {
@@ -282,166 +294,7 @@
   </style>
 </head>
 <body>
-  <header class="nav">
-    <div class="nav-brand">
-      <div class="nav-mark"><span></span></div>
-      EMPREST<span class="dot">.AI</span>
-    </div>
-    <div class="nav-tabs">
-      <button class="nav-tab is-active" type="button" data-view="catalogo">Catálogo</button>
-      <button class="nav-tab" type="button" data-view="meus">Meus empréstimos</button>
-    </div>
-    <div class="nav-end">
-      <span class="tag tag-outline">Colaborador</span>
-      <div class="avatar">AR</div>
-      <span class="nav-name">Ana Ribeiro</span>
-    </div>
-  </header>
-
-  <main class="page">
-    <div class="page-inner" id="inner" data-view="catalogo">
-      <section id="view-catalogo">
-        <div class="page-head">
-          <h1>Catálogo</h1>
-          <p class="lead" id="count"></p>
-          <input class="input" id="query" type="search" placeholder="Buscar por nome ou patrimônio" />
-        </div>
-        <div class="chips" id="chips"></div>
-        <div class="grid" id="grid"></div>
-        <div class="empty hidden" id="empty">Nenhum equipamento nesta busca.</div>
-      </section>
-
-      <section id="view-meus" class="hidden">
-        <div class="page-head">
-          <h1>Meus empréstimos</h1>
-          <p class="lead">2 de 3 itens em seu nome · prazo padrão de 14 dias</p>
-        </div>
-        <div class="slots">
-          <div class="slot is-on"></div>
-          <div class="slot is-on"></div>
-          <div class="slot"></div>
-        </div>
-        <div class="loan">
-          <div class="loan-item">Câmera Sony ZV-1<br /><span class="meta">TI-0301</span></div>
-          <div class="loan-col"><div class="k">Retirada</div><div class="v">29/08/2026</div></div>
-          <div class="loan-col"><div class="k">Devolver até</div><div class="v" style="color:#5fcfc4">12/09/2026</div></div>
-          <div class="loan-pill"><span class="pill pill-ok">Em dia</span></div>
-        </div>
-        <div class="loan">
-          <div class="loan-item">Dock Thunderbolt 4<br /><span class="meta">TI-0512</span></div>
-          <div class="loan-col"><div class="k">Retirada</div><div class="v">22/08/2026</div></div>
-          <div class="loan-col"><div class="k">Devolver até</div><div class="v" style="color:#5fcfc4">05/09/2026</div></div>
-          <div class="loan-pill"><span class="pill pill-ok">Em dia</span></div>
-        </div>
-        <div class="rules">
-          <span>Máximo de 3 itens</span>
-          <span>Prazo padrão de 14 dias</span>
-          <span>Atraso bloqueia novo empréstimo</span>
-        </div>
-      </section>
-    </div>
-  </main>
-
-  <script>
-    const ME = "Ana Ribeiro";
-    const items = [
-      { id: "TI-0142", name: "Notebook Dell Latitude 5450", cat: "Notebook", status: "disponivel" },
-      { id: "TI-0088", name: "MacBook Pro 14 M3", cat: "Notebook", status: "emprestado", person: "Marcos Lemos", until: "07/09/2026" },
-      { id: "TI-0231", name: 'Monitor LG 27" 4K', cat: "Monitor", status: "disponivel" },
-      { id: "TI-0233", name: 'Monitor Dell 24" FHD', cat: "Monitor", status: "manutencao", note: "Painel com falha, retorna em 05/09" },
-      { id: "TI-0301", name: "Câmera Sony ZV-1", cat: "Câmera", status: "emprestado", person: ME, until: "12/09/2026" },
-      { id: "TI-0455", name: "Cabo HDMI 2.1 3m", cat: "Cabo", status: "disponivel" },
-      { id: "TI-0512", name: "Dock Thunderbolt 4", cat: "Acessório", status: "emprestado", person: ME, until: "05/09/2026" },
-      { id: "TI-0318", name: "Tripé Manfrotto Befree", cat: "Acessório", status: "manutencao", note: "Trava do centro quebrada" },
-      { id: "TI-0402", name: "Headset Jabra Evolve2", cat: "Acessório", status: "disponivel" },
-    ];
-
-    let query = "";
-    let filter = "Todos";
-    let view = "catalogo";
-
-    function pill(status) {
-      if (status === "disponivel") return ["pill pill-ok", "Disponível"];
-      if (status === "manutencao") return ["pill pill-off", "Em manutenção"];
-      return ["pill pill-loan", "Emprestado"];
-    }
-
-    function detail(item) {
-      if (item.status === "disponivel") return "Pronto para retirada no balcão";
-      if (item.status === "manutencao") return item.note;
-      return "Com " + item.person + " · devolver até " + item.until;
-    }
-
-    function visible() {
-      const q = query.trim().toLowerCase();
-      return items.filter((item) => {
-        if (filter === "Disponíveis" && item.status !== "disponivel") return false;
-        if (filter === "Emprestados" && item.status !== "emprestado") return false;
-        if (filter === "Em manutenção" && item.status !== "manutencao") return false;
-        if (!q) return true;
-        return item.name.toLowerCase().includes(q) || item.id.toLowerCase().includes(q);
-      });
-    }
-
-    function showView(name) {
-      view = name;
-      document.getElementById("inner").dataset.view = name;
-      document.getElementById("view-catalogo").classList.toggle("hidden", name !== "catalogo");
-      document.getElementById("view-meus").classList.toggle("hidden", name !== "meus");
-      document.querySelectorAll(".nav-tab").forEach((tab) => {
-        tab.classList.toggle("is-active", tab.dataset.view === name);
-      });
-    }
-
-    function render() {
-      const all = items.length;
-      const avail = items.filter((i) => i.status === "disponivel").length;
-      document.getElementById("count").textContent = avail + " de " + all + " equipamentos disponíveis agora";
-
-      const chips = document.getElementById("chips");
-      chips.innerHTML = "";
-      ["Todos", "Disponíveis", "Emprestados", "Em manutenção"].forEach((name) => {
-        const b = document.createElement("button");
-        b.className = "chip" + (filter === name ? " is-active" : "");
-        b.type = "button";
-        b.textContent = name;
-        b.addEventListener("click", () => { filter = name; render(); });
-        chips.appendChild(b);
-      });
-
-      const list = visible();
-      const grid = document.getElementById("grid");
-      const empty = document.getElementById("empty");
-      grid.innerHTML = "";
-      empty.classList.toggle("hidden", list.length > 0);
-      list.forEach((item, index) => {
-        const [pillClass, pillText] = pill(item.status);
-        const card = document.createElement("article");
-        card.className = "card";
-        card.style.animationDelay = index * 30 + "ms";
-        card.innerHTML =
-          '<div class="card-top">' +
-            '<div class="card-copy">' +
-              '<div class="card-kicker">' + item.cat + "</div>" +
-              '<div class="card-title">' + item.name + "</div>" +
-              '<div class="meta">' + item.id + "</div>" +
-            "</div>" +
-            '<span class="' + pillClass + '">' + pillText + "</span>" +
-          "</div>" +
-          '<div class="detail">' + detail(item) + "</div>";
-        grid.appendChild(card);
-      });
-    }
-
-    document.querySelectorAll(".nav-tab").forEach((tab) => {
-      tab.addEventListener("click", () => showView(tab.dataset.view));
-    });
-    document.getElementById("query").addEventListener("input", (e) => {
-      query = e.target.value;
-      render();
-    });
-
-    render();
-  </script>
+  <div id="root"></div>
+  <script type="module" src="/src/main.tsx"></script>
 </body>
 </html>
