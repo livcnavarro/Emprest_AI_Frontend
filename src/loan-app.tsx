@@ -14,81 +14,6 @@ interface Equipment {
   imageSourceUrl: string | null;
 }
 
-const demoEquipment: Equipment[] = [
-  {
-    patrimony: "TI-0142",
-    name: "Notebook Dell Latitude 5450",
-    category: "Notebook",
-    status: "Disponível",
-    imageUrl: "",
-    imageSourceUrl: null,
-  },
-  {
-    patrimony: "TI-0088",
-    name: "MacBook Pro 14 M3",
-    category: "Notebook",
-    status: "Emprestado",
-    imageUrl: "",
-    imageSourceUrl: null,
-  },
-  {
-    patrimony: "TI-0231",
-    name: 'Monitor LG 27" 4K',
-    category: "Monitor",
-    status: "Disponível",
-    imageUrl: "",
-    imageSourceUrl: null,
-  },
-  {
-    patrimony: "TI-0233",
-    name: 'Monitor Dell 24" FHD',
-    category: "Monitor",
-    status: "Em manutenção",
-    imageUrl: "",
-    imageSourceUrl: null,
-  },
-  {
-    patrimony: "TI-0301",
-    name: "Câmera Sony ZV-1",
-    category: "Câmera",
-    status: "Emprestado",
-    imageUrl: "",
-    imageSourceUrl: null,
-  },
-  {
-    patrimony: "TI-0455",
-    name: "Cabo HDMI 2.1 3m",
-    category: "Cabo",
-    status: "Disponível",
-    imageUrl: "",
-    imageSourceUrl: null,
-  },
-  {
-    patrimony: "TI-0512",
-    name: "Dock Thunderbolt 4",
-    category: "Acessório",
-    status: "Emprestado",
-    imageUrl: "",
-    imageSourceUrl: null,
-  },
-  {
-    patrimony: "TI-0318",
-    name: "Tripé Manfrotto Befree",
-    category: "Acessório",
-    status: "Em manutenção",
-    imageUrl: "",
-    imageSourceUrl: null,
-  },
-  {
-    patrimony: "TI-0402",
-    name: "Headset Jabra Evolve2",
-    category: "Acessório",
-    status: "Disponível",
-    imageUrl: "",
-    imageSourceUrl: null,
-  },
-];
-
 interface Loan {
   id: string;
   equipmentPatrimony: string;
@@ -181,9 +106,9 @@ export function LoanApp({ session, onSignOut }: LoanAppProps) {
   const [view, setView] = useState<AppView>("catalog");
   const [filter, setFilter] = useState<CatalogFilter>("Todos");
   const [query, setQuery] = useState("");
-  const [equipment] = useState<Equipment[]>(demoEquipment);
+  const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [requestingPatrimony, setRequestingPatrimony] = useState<string | null>(
@@ -192,8 +117,10 @@ export function LoanApp({ session, onSignOut }: LoanAppProps) {
   const [signingOut, setSigningOut] = useState(false);
 
   const loadData = useCallback(async () => {
-    const openLoans = await apiRequest<Loan[]>(session, "/api/loans");
-    setLoans(openLoans);
+    return Promise.all([
+      apiRequest<Equipment[]>(session, "/api/equipment"),
+      apiRequest<Loan[]>(session, "/api/loans"),
+    ]);
   }, [session]);
 
   useEffect(() => {
@@ -202,6 +129,12 @@ export function LoanApp({ session, onSignOut }: LoanAppProps) {
     setError(null);
 
     loadData()
+      .then(([catalog, openLoans]) => {
+        if (active) {
+          setEquipment(catalog);
+          setLoans(openLoans);
+        }
+      })
       .catch((cause: unknown) => {
         if (active) {
           setError(
@@ -246,8 +179,17 @@ export function LoanApp({ session, onSignOut }: LoanAppProps) {
         `Empréstimo criado. Devolução prevista para ${formatDate(created.dueDate)}.`,
       );
       setView("loans");
+      setEquipment((catalog) =>
+        catalog.map((entry) =>
+          entry.patrimony === item.patrimony
+            ? { ...entry, status: "Emprestado" }
+            : entry,
+        ),
+      );
       try {
-        await loadData();
+        const [catalog, openLoans] = await loadData();
+        setEquipment(catalog);
+        setLoans(openLoans);
       } catch {
         setError(
           "O empréstimo foi criado, mas não foi possível atualizar a lista. Recarregue a página.",
@@ -367,7 +309,9 @@ export function LoanApp({ session, onSignOut }: LoanAppProps) {
                   },
                 )}
               </div>
-              {visibleEquipment.length === 0 ? (
+              {loading ? (
+                <div className="empty-state">Carregando catálogo...</div>
+              ) : visibleEquipment.length === 0 ? (
                 <div className="empty-state">
                   {equipment.length === 0
                     ? "O catálogo ainda não possui equipamentos cadastrados."
@@ -385,18 +329,17 @@ export function LoanApp({ session, onSignOut }: LoanAppProps) {
                             onError={(event) => {
                               event.currentTarget.hidden = true;
                               const fallback =
-                                event.currentTarget.parentElement?.querySelector(
+                                event.currentTarget.parentElement?.querySelector<HTMLElement>(
                                   ".image-unavailable",
                                 );
-                              fallback?.classList.remove("hidden");
+                              if (fallback) fallback.hidden = false;
                             }}
                             src={item.imageUrl}
                           />
-                        ) : (
-                          <span className="image-unavailable">
-                            Imagem ainda não disponível no Storage.
-                          </span>
-                        )}
+                        ) : null}
+                        <span className="image-unavailable" hidden={Boolean(item.imageUrl)}>
+                          Imagem ainda não disponível no Storage.
+                        </span>
                         {item.imageSourceUrl && (
                           <figcaption>
                             <a

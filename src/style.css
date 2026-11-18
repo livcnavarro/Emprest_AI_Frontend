@@ -255,6 +255,10 @@
   text-align: center;
 }
 
+.image-unavailable[hidden] {
+  display: none;
+}
+
 .loan-request-button {
   min-height: 38px;
   border: 1px solid var(--color-accent);
